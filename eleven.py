@@ -57,7 +57,7 @@ def split_text_for_tts(text, max_chars=250):
     
     return fragments
 
-def generate_audio(text, api_key, voice_id, model_id="eleven_monolingual_v1"):
+def generate_audio(text, api_key, voice_id, stability, similarity, use_speaker_boost, model_id="eleven_multilingual_v2"):
     """
     Genera audio usando la API de Eleven Labs
     """
@@ -73,8 +73,10 @@ def generate_audio(text, api_key, voice_id, model_id="eleven_monolingual_v1"):
         "text": text,
         "model_id": model_id,
         "voice_settings": {
-            "stability": 0.5,
-            "similarity_boost": 0.5
+            "stability": stability,
+            "similarity_boost": similarity,
+            "style": 0,
+            "use_speaker_boost": use_speaker_boost
         }
     }
     
@@ -139,6 +141,37 @@ def main():
                                       max_value=500, 
                                       value=250,
                                       help="Se respetarán los puntos finales y la estructura del texto")
+
+    # Configuración del modelo y parámetros de voz
+    st.sidebar.markdown("### 🔧 Configuración del modelo")
+    
+    # Selección del modelo
+    model_id = "eleven_multilingual_v2"  # Modelo fijo
+    st.sidebar.markdown("""
+    **Modelo seleccionado:** Eleven Multilingual v2
+    - Soporta 29 idiomas
+    - Ideal para voiceovers y audiolibros
+    """)
+    
+    # Parámetros de voz
+    st.sidebar.markdown("### 🎚️ Ajustes de voz")
+    stability = st.sidebar.slider("Stability", 
+                                min_value=0.0, 
+                                max_value=1.0, 
+                                value=0.5,
+                                step=0.01,
+                                help="Controla la estabilidad de la voz (0.5 recomendado)")
+    
+    similarity = st.sidebar.slider("Similarity", 
+                                 min_value=0.0, 
+                                 max_value=1.0, 
+                                 value=0.75,
+                                 step=0.01,
+                                 help="Controla la similitud con la voz original (0.75 recomendado)")
+                                 
+    use_speaker_boost = st.sidebar.checkbox("Speaker Boost", 
+                                          value=True,
+                                          help="Mejora la claridad de la voz")
     
     # Obtener voces disponibles si hay API key
     if api_key:
@@ -189,7 +222,14 @@ def main():
         all_audios = []
         for i, fragment in enumerate(fragments, 1):
             status_text.text(f"Generando audio {i}/{len(fragments)}...")
-            audio_content = generate_audio(fragment, api_key, voice_id)
+            audio_content = generate_audio(
+                fragment, 
+                api_key, 
+                voice_id, 
+                stability,
+                similarity,
+                use_speaker_boost
+            )
             
             if audio_content:
                 all_audios.append(audio_content)
